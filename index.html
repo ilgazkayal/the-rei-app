@@ -3,282 +3,418 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Mini App</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <title>TheRei App</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <!-- Telegram Mini App Script -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-
     <style>
         :root {
-            --bg-color: #0f1123;
-            --card-bg: #1a1b36;
-            --primary: #21cd6e; /* Yeşil Buton Rengi */
-            --text-main: #ffffff;
-            --text-muted: #8b8ea1;
-            --accent: #8b3dff; /* Mor Vurgu */
-            --accent-glow: rgba(139, 61, 255, 0.4);
-            --border-color: #2a2c4e;
+            --bg: #0f1123;
+            --card: #181938;
+            --card2: #1c1d3c;
+            --primary: #21cd6e;
+            --accent: #8b3dff;
+            --accent-glow: rgba(139,61,255,0.35);
+            --gold: #f7b731;
+            --text: #fff;
+            --muted: #8b8ea1;
+            --border: #2a2c4e;
         }
+        * { margin:0; padding:0; box-sizing:border-box; font-family:'Inter',sans-serif; -webkit-tap-highlight-color:transparent; }
+        body { background:var(--bg); color:var(--text); height:100vh; display:flex; flex-direction:column; overflow:hidden; }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Inter', sans-serif;
-            -webkit-tap-highlight-color: transparent;
-        }
+        /* ---- PAGES ---- */
+        .page { display:none; flex:1; overflow-y:auto; padding:20px; padding-bottom:90px; }
+        .page.active { display:block; }
 
-        body {
-            background-color: var(--bg-color);
-            color: var(--text-main);
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            overflow-x: hidden;
-        }
+        /* ---- BRAND ---- */
+        .brand-header { text-align:center; margin-bottom:22px; padding-top:8px; }
+        .brand-header i { color:var(--gold); font-size:38px; display:block; margin-bottom:6px; filter:drop-shadow(0 0 12px rgba(247,183,49,.55)); }
+        .brand-header h1 { font-family:'Outfit',sans-serif; font-size:32px; font-weight:800; letter-spacing:1.5px; }
 
-        .main-container {
-            flex: 1;
-            padding: 20px;
-            overflow-y: auto;
-            padding-bottom: 90px; /* Alttaki bar için boşluk */
-        }
+        /* ---- HOME: daily reward ---- */
+        .reward-card { background:linear-gradient(180deg,#181938,#111228); border:1px solid var(--border); border-radius:16px; padding:22px; text-align:center; }
+        .reward-card h2 { font-size:17px; font-weight:700; margin-bottom:6px; }
+        .reward-card .sub { color:#5bb5ff; font-size:13px; margin-bottom:18px; }
+        .day-list { background:var(--card2); border-radius:12px; overflow:hidden; margin-bottom:20px; }
+        .day-row { display:flex; justify-content:space-between; padding:11px 16px; font-size:14px; border-bottom:1px solid rgba(255,255,255,.05); }
+        .day-row:last-child { border-bottom:none; }
+        .day-row.active { background:var(--accent); font-weight:700; }
+        .day-row .pts { color:var(--gold); font-weight:700; }
+        .day-row.active .pts { color:#fff; }
+        .reward-note { color:var(--muted); font-size:11px; text-align:left; margin-bottom:14px; padding:0 4px; }
+        .claim-btn { background:var(--primary); color:#fff; border:none; width:100%; padding:15px; border-radius:12px; font-size:16px; font-weight:700; cursor:pointer; box-shadow:0 4px 15px rgba(33,205,110,.3); transition:transform .1s; }
+        .claim-btn:active { transform:scale(.97); }
+        .claim-btn:disabled { background:#2a2c4e; color:var(--muted); box-shadow:none; cursor:not-allowed; }
 
-        /* Reward Box */
-        .reward-card {
-            background: linear-gradient(180deg, #181938 0%, #111228 100%);
-            border: 1px solid var(--border-color);
-            border-radius: 16px;
-            padding: 24px;
-            text-align: center;
-        }
+        /* ---- GAMES PAGE ---- */
+        .section-title { font-size:13px; font-weight:600; color:var(--muted); letter-spacing:.5px; text-transform:uppercase; margin-bottom:14px; }
+        .games-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:22px; }
+        .game-card { background:var(--card); border:1px solid var(--border); border-radius:16px; padding:20px 14px; text-align:center; cursor:pointer; transition: transform .15s, box-shadow .15s; position:relative; overflow:hidden; }
+        .game-card:active { transform:scale(.96); }
+        .game-card::before { content:''; position:absolute; inset:0; background:linear-gradient(135deg,var(--accent-glow),transparent); opacity:0; transition:opacity .2s; }
+        .game-card:hover::before { opacity:1; }
+        .game-card .emoji { font-size:40px; display:block; margin-bottom:10px; }
+        .game-card h3 { font-size:14px; font-weight:700; margin-bottom:4px; }
+        .game-card .reward-badge { display:inline-block; background:rgba(247,183,49,.15); color:var(--gold); font-size:11px; font-weight:600; padding:3px 10px; border-radius:20px; }
+        .game-card .spins-left { position:absolute; top:10px; right:10px; background:rgba(0,0,0,.5); border-radius:20px; font-size:10px; padding:2px 7px; color:var(--muted); }
 
-        .reward-header h2 {
-            font-size: 18px;
-            font-weight: 700;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            margin-bottom: 8px;
-        }
+        /* ---- GAME MODAL ---- */
+        .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.85); z-index:200; align-items:center; justify-content:center; }
+        .modal-overlay.open { display:flex; }
+        .modal { background:var(--card); border:1px solid var(--border); border-radius:20px; padding:28px 22px; width:90%; max-width:340px; text-align:center; }
+        .modal h2 { font-size:20px; font-weight:800; margin-bottom:6px; }
+        .modal .modal-sub { color:var(--muted); font-size:13px; margin-bottom:20px; }
+        .play-area { font-size:70px; min-height:100px; display:flex; align-items:center; justify-content:center; margin:10px 0 20px; }
+        .play-area.spinning { animation: spin-shake 0.6s ease infinite alternate; }
+        @keyframes spin-shake { 0%{transform:rotate(-10deg) scale(1.05);} 100%{transform:rotate(10deg) scale(0.95);} }
+        .result-badge { padding:10px 20px; border-radius:12px; font-size:15px; font-weight:700; margin-bottom:18px; display:none; }
+        .result-badge.win { background:rgba(33,205,110,.15); color:var(--primary); border:1px solid var(--primary); }
+        .result-badge.jackpot { background:rgba(247,183,49,.15); color:var(--gold); border:1px solid var(--gold); animation: glow-pulse 1s infinite alternate; }
+        .result-badge.lose { background:rgba(255,255,255,.05); color:var(--muted); border:1px solid var(--border); }
+        @keyframes glow-pulse { from{box-shadow:0 0 5px rgba(247,183,49,.3);} to{box-shadow:0 0 20px rgba(247,183,49,.7);} }
+        .modal-btns { display:flex; gap:10px; }
+        .modal-btn { flex:1; padding:13px; border-radius:12px; font-size:14px; font-weight:700; cursor:pointer; border:none; transition:transform .1s; }
+        .modal-btn:active { transform:scale(.97); }
+        .modal-btn.play { background:linear-gradient(135deg,var(--accent),#5e60ce); color:#fff; box-shadow:0 4px 15px var(--accent-glow); }
+        .modal-btn.close-btn { background:var(--card2); color:var(--muted); border:1px solid var(--border); }
+        .spins-info { font-size:12px; color:var(--muted); margin-bottom:14px; }
 
-        .reward-header p {
-            color: #5bb5ff;
-            font-size: 13px;
-            margin-bottom: 20px;
-        }
+        /* ---- BOTTOM NAV ---- */
+        .bottom-nav { position:fixed; bottom:0; left:0; width:100%; background:#0b0c19; border-top:1px solid var(--border); display:flex; justify-content:space-around; padding:10px 0 env(safe-area-inset-bottom,12px); z-index:100; }
+        .nav-item { display:flex; flex-direction:column; align-items:center; gap:5px; color:var(--muted); text-decoration:none; font-size:11px; transition:color .2s; background:none; border:none; cursor:pointer; }
+        .nav-item i { font-size:20px; }
+        .nav-item.active { color:var(--text); }
+        .nav-item.active i { color:var(--accent); }
 
-        /* List */
-        .day-list {
-            background-color: #1c1d3c;
-            border-radius: 12px;
-            overflow: hidden;
-            margin-bottom: 24px;
-        }
-
-        .day-row {
-            display: flex;
-            justify-content: space-between;
-            padding: 12px 16px;
-            font-size: 14px;
-            border-bottom: 1px solid rgba(255,255,255,0.05);
-        }
-
-        .day-row:last-child {
-            border-bottom: none;
-        }
-
-        .day-row.active {
-            background-color: var(--accent);
-            font-weight: 600;
-        }
-
-        .day-row .points {
-            color: #ffd700;
-            font-weight: 600;
-        }
-        
-        .day-row.active .points {
-            color: #ffffff;
-        }
-
-        .reward-note {
-            color: var(--text-muted);
-            font-size: 11px;
-            text-align: left;
-            margin-bottom: 16px;
-            padding: 0 4px;
-        }
-
-        .claim-btn {
-            background-color: var(--primary);
-            color: white;
-            border: none;
-            width: 100%;
-            padding: 16px;
-            border-radius: 12px;
-            font-size: 16px;
-            font-weight: 700;
-            cursor: pointer;
-            box-shadow: 0 4px 15px rgba(33, 205, 110, 0.3);
-            transition: transform 0.1s;
-        }
-
-        .claim-btn:active {
-            transform: scale(0.97);
-        }
-
-        /* Bottom Tab Navigator */
-        .bottom-nav {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            background-color: #0b0c19;
-            border-top: 1px solid var(--border-color);
-            display: flex;
-            justify-content: space-around;
-            padding: 10px 0;
-            padding-bottom: env(safe-area-inset-bottom, 15px); /* iOS için güvenli alan */
-            z-index: 100;
-        }
-
-        .nav-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 6px;
-            color: var(--text-muted);
-            text-decoration: none;
-            font-size: 11px;
-            transition: color 0.2s;
-        }
-
-        .nav-item i {
-            font-size: 20px;
-        }
-
-        .nav-item.active {
-            color: var(--text-main);
-        }
+        /* ---- COMING SOON ---- */
+        .coming-soon { text-align:center; padding:60px 20px; }
+        .coming-soon .icon { font-size:60px; margin-bottom:16px; }
+        .coming-soon h2 { font-size:22px; font-weight:700; margin-bottom:8px; }
+        .coming-soon p { color:var(--muted); font-size:14px; }
     </style>
 </head>
 <body>
 
-    <div class="main-container">
-        
-        <!-- THE REI BRANDING HEADER -->
-        <div style="text-align: center; margin-bottom: 25px; padding-top: 10px;">
-            <i class="fa-solid fa-crown" style="color: #f7b731; font-size: 42px; display: block; margin-bottom: 8px; filter: drop-shadow(0 0 10px rgba(247,183,49,0.5));"></i>
-            <h1 style="color: white; font-size: 34px; font-weight: 800; letter-spacing: 1.5px; font-family: 'Outfit', 'Inter', sans-serif;">TheRei</h1>
+    <!-- ANA SAYFA -->
+    <div class="page active" id="page-home">
+        <div class="brand-header">
+            <i class="fa-solid fa-crown"></i>
+            <h1>TheRei</h1>
         </div>
-
         <div class="reward-card">
-            <div class="reward-header">
-                <h2>🎁 Günlük Seri Ödülleri</h2>
-                <p>Mevcut serin: 1 gün. Sıradaki ödülün vurgulandı.</p>
-            </div>
-
+            <h2>🎁 Günlük Seri Ödülleri</h2>
+            <p class="sub" id="seriBilgi">Mevcut serin: 1 gün. Sıradaki ödül vurgulandı.</p>
             <div class="day-list">
-                <div class="day-row">
-                    <span>Seri</span>
-                    <span>Ödül</span>
-                </div>
-                <div class="day-row active">
-                    <span>Gün 1</span>
-                    <span class="points">300 Puan</span>
-                </div>
-                <div class="day-row">
-                    <span>Gün 2</span>
-                    <span class="points">400 Puan</span>
-                </div>
-                <div class="day-row">
-                    <span>Gün 3</span>
-                    <span class="points">500 Puan</span>
-                </div>
-                <div class="day-row">
-                    <span>Gün 4</span>
-                    <span class="points">600 Puan</span>
-                </div>
-                <div class="day-row">
-                    <span>Gün 5</span>
-                    <span class="points">700 Puan</span>
-                </div>
-                <div class="day-row">
-                    <span>Gün 6</span>
-                    <span class="points">800 Puan</span>
-                </div>
-                <div class="day-row">
-                    <span>Gün 7</span>
-                    <span class="points">900 Puan</span>
-                </div>
-                <div class="day-row">
-                    <span>Gün 8+</span>
-                    <span class="points">1,000 Puan</span>
-                </div>
+                <div class="day-row"><span>Seri</span><span>Ödül</span></div>
+                <div class="day-row active"><span>Gün 1</span><span class="pts">300 Puan</span></div>
+                <div class="day-row"><span>Gün 2</span><span class="pts">400 Puan</span></div>
+                <div class="day-row"><span>Gün 3</span><span class="pts">500 Puan</span></div>
+                <div class="day-row"><span>Gün 4</span><span class="pts">600 Puan</span></div>
+                <div class="day-row"><span>Gün 5</span><span class="pts">700 Puan</span></div>
+                <div class="day-row"><span>Gün 6</span><span class="pts">800 Puan</span></div>
+                <div class="day-row"><span>Gün 7</span><span class="pts">900 Puan</span></div>
+                <div class="day-row"><span>Gün 8+</span><span class="pts">1,000 Puan</span></div>
             </div>
-
             <p class="reward-note">Not: Bir gün atlarsan seri başa döner.</p>
-
             <button class="claim-btn" id="claimBtn" onclick="claimReward()">Ödülü Al (+300 P)</button>
         </div>
     </div>
 
-    <!-- Bottom Navigation -->
+    <!-- OYUNLAR SAYFASI -->
+    <div class="page" id="page-games">
+        <div class="brand-header">
+            <i class="fa-solid fa-crown"></i>
+            <h1>TheRei</h1>
+        </div>
+        <p class="section-title">🎮 Günde 5 hak — Puan kazan!</p>
+        <div class="games-grid">
+            <div class="game-card" onclick="openGame('slot')">
+                <span class="emoji">🎰</span>
+                <h3>Slot Makinesi</h3>
+                <span class="reward-badge">Max 1000 P</span>
+                <span class="spins-left" id="spins-slot">5 hak</span>
+            </div>
+            <div class="game-card" onclick="openGame('dice')">
+                <span class="emoji">🎲</span>
+                <h3>Zar At</h3>
+                <span class="reward-badge">Max 100 P</span>
+                <span class="spins-left" id="spins-dice">5 hak</span>
+            </div>
+            <div class="game-card" onclick="openGame('dart')">
+                <span class="emoji">🎯</span>
+                <h3>Dart</h3>
+                <span class="reward-badge">Max 200 P</span>
+                <span class="spins-left" id="spins-dart">5 hak</span>
+            </div>
+            <div class="game-card" onclick="openGame('bowling')">
+                <span class="emoji">🎳</span>
+                <h3>Bowling</h3>
+                <span class="reward-badge">Max 250 P</span>
+                <span class="spins-left" id="spins-bowling">5 hak</span>
+            </div>
+            <div class="game-card" onclick="openGame('soccer')">
+                <span class="emoji">⚽</span>
+                <h3>Futbol</h3>
+                <span class="reward-badge">Max 150 P</span>
+                <span class="spins-left" id="spins-soccer">5 hak</span>
+            </div>
+            <div class="game-card" onclick="openGame('basketball')">
+                <span class="emoji">🏀</span>
+                <h3>Basketbol</h3>
+                <span class="reward-badge">Max 150 P</span>
+                <span class="spins-left" id="spins-basketball">5 hak</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- SOHBET -->
+    <div class="page" id="page-sohbet">
+        <div class="coming-soon">
+            <div class="icon">💬</div>
+            <h2>Sohbet</h2>
+            <p>Yakında buradan toplulukla sohbet edebileceksiniz.</p>
+        </div>
+    </div>
+
+    <!-- GÖREVLER -->
+    <div class="page" id="page-gorevler">
+        <div class="coming-soon">
+            <div class="icon">📋</div>
+            <h2>Görevler</h2>
+            <p>Puan kazanmak için görevler yakında burada!</p>
+        </div>
+    </div>
+
+    <!-- PROFİL -->
+    <div class="page" id="page-profil">
+        <div class="coming-soon">
+            <div class="icon">👤</div>
+            <h2>Profil</h2>
+            <p>Kullanıcı profili ve istatistikler yakında!</p>
+        </div>
+    </div>
+
+    <!-- OYUN MODALI -->
+    <div class="modal-overlay" id="gameModal">
+        <div class="modal">
+            <h2 id="modalTitle">Oyun</h2>
+            <p class="modal-sub" id="modalSub">Şansını dene!</p>
+            <div class="play-area" id="playArea">🎰</div>
+            <p class="spins-info" id="spinsInfo">Kalan: 5 hak</p>
+            <div class="result-badge" id="resultBadge"></div>
+            <div class="modal-btns">
+                <button class="modal-btn play" id="playBtn" onclick="playGame()">OYNA!</button>
+                <button class="modal-btn close-btn" onclick="closeModal()">Kapat</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- BOTTOM NAVIGATION -->
     <nav class="bottom-nav">
-        <a href="#" class="nav-item active">
-            <i class="fa-solid fa-house"></i>
-            <span>Ana Sayfa</span>
-        </a>
-        <a href="#" class="nav-item">
-            <i class="fa-solid fa-rocket"></i>
-            <span>Oyunlar</span>
-        </a>
-        <a href="#" class="nav-item">
-            <i class="fa-regular fa-comments"></i>
-            <span>Sohbet</span>
-        </a>
-        <a href="#" class="nav-item">
-            <i class="fa-solid fa-list-check"></i>
-            <span>Görevler</span>
-        </a>
-        <a href="#" class="nav-item">
-            <i class="fa-regular fa-user"></i>
-            <span>Profil</span>
-        </a>
+        <button class="nav-item active" onclick="showPage('home', this)">
+            <i class="fa-solid fa-house"></i><span>Ana Sayfa</span>
+        </button>
+        <button class="nav-item" onclick="showPage('games', this)">
+            <i class="fa-solid fa-rocket"></i><span>Oyunlar</span>
+        </button>
+        <button class="nav-item" onclick="showPage('sohbet', this)">
+            <i class="fa-regular fa-comments"></i><span>Sohbet</span>
+        </button>
+        <button class="nav-item" onclick="showPage('gorevler', this)">
+            <i class="fa-solid fa-list-check"></i><span>Görevler</span>
+        </button>
+        <button class="nav-item" onclick="showPage('profil', this)">
+            <i class="fa-regular fa-user"></i><span>Profil</span>
+        </button>
     </nav>
 
     <script>
-        // Telegram altyapısını başlat
         const tg = window.Telegram.WebApp;
-        tg.expand(); // Ekranı tam boyuta genişlet
+        tg.expand();
 
-        // Uygulamanın temasını telegram rengine uydurmak istersek (isteğe bağlı)
-        // tg.backgroundColor = '#0f1123';
-        // tg.headerColor = '#0f1123';
-        
-        // Ödül alma fonksiyonu
-        function claimReward() {
-            // Telegram Bot'a veri gönderip pencereyi kapatma örneği
-            const btn = document.getElementById("claimBtn");
-            btn.innerHTML = "<i class='fa-solid fa-spinner fa-spin'></i> İşleniyor...";
-            btn.style.backgroundColor = "#1b9b53";
-            
-            setTimeout(() => {
-                btn.innerHTML = "<i class='fa-solid fa-check'></i> 300 Puan Alındı!";
-                
-                // Telegram Web App API üzerinden arka planda bota mesaj yollayabiliriz.
-                // Burada botunuza bildirim atmak istiyorsak: (Sadece özel şartlarda çalışır)
-                // tg.sendData("CLAIM_300");
-                
-                // Haptic feedback (Vibrasyon)
-                tg.HapticFeedback.notificationOccurred("success");
-                
-            }, 1000);
+        // ---- SAYFA GEÇİŞİ ----
+        function showPage(name, btn) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            document.getElementById('page-' + name).classList.add('active');
+            btn.classList.add('active');
+            tg.HapticFeedback.selectionChanged();
         }
+
+        // ---- GÜNLÜK ÖDÜL ----
+        function claimReward() {
+            const btn = document.getElementById('claimBtn');
+            const today = new Date().toDateString();
+            const lastClaim = localStorage.getItem('lastClaim');
+            if (lastClaim === today) {
+                tg.showAlert('Bugünkü ödülünüzü zaten aldınız! Yarın tekrar gelin 🌟');
+                return;
+            }
+            btn.innerHTML = "<i class='fa-solid fa-spinner fa-spin'></i> İşleniyor...";
+            btn.disabled = true;
+            setTimeout(() => {
+                localStorage.setItem('lastClaim', today);
+                btn.innerHTML = "<i class='fa-solid fa-check'></i> 300 Puan Alındı!";
+                tg.HapticFeedback.notificationOccurred('success');
+                // Bota bildir
+                try { tg.sendData(JSON.stringify({action:'daily_claim', points:300})); } catch(e){}
+            }, 900);
+        }
+
+        // ---- OYUN SİSTEMİ ----
+        const GAMES = {
+            slot:       { emoji:'🎰', title:'Slot Makinesi', sub:'777 için JACKPOT!', id:'slot' },
+            dice:       { emoji:'🎲', title:'Zar At',       sub:'6 gelirse 100 puan!', id:'dice' },
+            dart:       { emoji:'🎯', title:'Dart',         sub:'Tam isabet 200 puan!', id:'dart' },
+            bowling:    { emoji:'🎳', title:'Bowling',      sub:'Strike için 250 puan!', id:'bowling' },
+            soccer:     { emoji:'⚽', title:'Futbol',       sub:'Gol at 150 puan kazan!', id:'soccer' },
+            basketball: { emoji:'🏀', title:'Basketbol',   sub:'Basket at 150 puan!', id:'basketball' }
+        };
+
+        let currentGame = null;
+        let isPlaying = false;
+
+        function getSpins(gameId) {
+            const today = new Date().toDateString();
+            const key = 'spins_' + gameId + '_' + today;
+            return parseInt(localStorage.getItem(key) || '0');
+        }
+
+        function useSpins(gameId) {
+            const today = new Date().toDateString();
+            const key = 'spins_' + gameId + '_' + today;
+            const used = getSpins(gameId) + 1;
+            localStorage.setItem(key, used);
+            return 5 - used;
+        }
+
+        function updateSpinBadges() {
+            Object.keys(GAMES).forEach(id => {
+                const used = getSpins(id);
+                const left = 5 - used;
+                const el = document.getElementById('spins-' + id);
+                if (el) {
+                    el.textContent = left > 0 ? left + ' hak' : 'Bitti';
+                    el.style.color = left > 0 ? '' : '#ef4444';
+                }
+            });
+        }
+
+        function openGame(id) {
+            const g = GAMES[id];
+            currentGame = id;
+            const used = getSpins(id);
+            const left = 5 - used;
+
+            document.getElementById('modalTitle').textContent = g.emoji + ' ' + g.title;
+            document.getElementById('modalSub').textContent = g.sub;
+            document.getElementById('playArea').textContent = g.emoji;
+            document.getElementById('playArea').classList.remove('spinning');
+            document.getElementById('spinsInfo').textContent = 'Kalan hak: ' + left + ' / 5';
+            document.getElementById('resultBadge').style.display = 'none';
+            document.getElementById('resultBadge').className = 'result-badge';
+
+            const playBtn = document.getElementById('playBtn');
+            playBtn.disabled = left <= 0;
+            playBtn.textContent = left > 0 ? 'OYNA!' : 'Hakkın Bitti';
+            playBtn.style.opacity = left > 0 ? '1' : '0.5';
+
+            document.getElementById('gameModal').classList.add('open');
+            tg.HapticFeedback.impactOccurred('light');
+        }
+
+        function closeModal() {
+            document.getElementById('gameModal').classList.remove('open');
+            updateSpinBadges();
+        }
+
+        function calcResult(gameId) {
+            const r = Math.random();
+            switch(gameId) {
+                case 'slot':
+                    if (r < 0.02) return { points: 1000, type: 'jackpot', text: '🎰 JACKPOT! 777 Geldi! +1000 Puan!' };
+                    if (r < 0.15) return { points: 150,  type: 'win',     text: '🍒 Üçlü! +150 Puan!' };
+                    if (r < 0.35) return { points: 25,   type: 'win',     text: '👍 İkili! +25 Puan!' };
+                    return { points: 3, type: 'lose', text: '😔 Maalesef... Teselli: +3 Puan' };
+                case 'dice':
+                    if (r < 0.17) return { points: 100, type: 'jackpot', text: '🎲 ALTI GELDİ! +100 Puan!' };
+                    if (r < 0.50) return { points: 35,  type: 'win',     text: '🎲 İyi atış! +35 Puan!' };
+                    return { points: 5, type: 'lose', text: '😔 Düşük zar... +5 Puan' };
+                case 'dart':
+                    if (r < 0.12) return { points: 200, type: 'jackpot', text: '🎯 BULLSEYE! +200 Puan!' };
+                    if (r < 0.45) return { points: 50,  type: 'win',     text: '🎯 Yakın! +50 Puan!' };
+                    return { points: 8, type: 'lose', text: '😔 Karavana! +8 Puan' };
+                case 'bowling':
+                    if (r < 0.15) return { points: 250, type: 'jackpot', text: '🎳 STRİKE! +250 Puan!' };
+                    if (r < 0.50) return { points: 40,  type: 'win',     text: '🎳 İyi atış! +40 Puan!' };
+                    return { points: 6, type: 'lose', text: '😔 Az devrildi... +6 Puan' };
+                case 'soccer':
+                    if (r < 0.40) return { points: 150, type: 'jackpot', text: '⚽ GOOOL! +150 Puan!' };
+                    return { points: 10, type: 'lose', text: '😔 Kaçtı! +10 Puan' };
+                case 'basketball':
+                    if (r < 0.40) return { points: 150, type: 'jackpot', text: '🏀 BASKET! +150 Puan!' };
+                    return { points: 10, type: 'lose', text: '😔 Döner çıktı! +10 Puan' };
+            }
+        }
+
+        function playGame() {
+            if (isPlaying) return;
+            const left = 5 - getSpins(currentGame);
+            if (left <= 0) { tg.showAlert('Bu oyundaki günlük hakkınız bitti!'); return; }
+
+            isPlaying = true;
+            const playBtn = document.getElementById('playBtn');
+            const playArea = document.getElementById('playArea');
+            const badge = document.getElementById('resultBadge');
+            const g = GAMES[currentGame];
+            const emojis = ['🎰','🎲','🎯','🎳','⚽','🏀','🌀','⭐','💫'];
+
+            playBtn.disabled = true;
+            badge.style.display = 'none';
+            playArea.classList.add('spinning');
+            tg.HapticFeedback.impactOccurred('medium');
+
+            // Karıştırma animasyonu
+            let count = 0;
+            const interval = setInterval(() => {
+                playArea.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+                count++;
+                if (count > 12) {
+                    clearInterval(interval);
+                    playArea.textContent = g.emoji;
+                    playArea.classList.remove('spinning');
+
+                    const result = calcResult(currentGame);
+                    const remaining = useSpins(currentGame);
+
+                    badge.textContent = result.text;
+                    badge.className = 'result-badge ' + result.type;
+                    badge.style.display = 'block';
+                    document.getElementById('spinsInfo').textContent = 'Kalan hak: ' + remaining + ' / 5';
+
+                    if (result.type === 'jackpot') tg.HapticFeedback.notificationOccurred('success');
+                    else if (result.type === 'win') tg.HapticFeedback.notificationOccurred('success');
+                    else tg.HapticFeedback.notificationOccurred('error');
+
+                    // Bota puan bildir
+                    try { tg.sendData(JSON.stringify({action:'game_result', game: currentGame, points: result.points})); } catch(e) {}
+
+                    if (remaining > 0) {
+                        playBtn.textContent = 'Tekrar Oyna';
+                        playBtn.disabled = false;
+                    } else {
+                        playBtn.textContent = 'Hakkın Bitti';
+                        playBtn.disabled = true;
+                        playBtn.style.opacity = '0.5';
+                    }
+                    isPlaying = false;
+                }
+            }, 80);
+        }
+
+        // Sayfa yüklenince rozet sayaçlarını güncelle
+        updateSpinBadges();
     </script>
 </body>
 </html>
