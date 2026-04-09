@@ -404,8 +404,22 @@ let wheelAngle=0,wheelSpinning=false;
 function drawWheel(angle){
   const c=document.getElementById('wheelCanvas'),ctx=c.getContext('2d'),cx=c.width/2,cy=c.height/2,r=cx-4,n=WSEGMENTS.length,arc=2*Math.PI/n;
   ctx.clearRect(0,0,c.width,c.height);
-  WSEGMENTS.forEach((seg,i)=>{const a=angle+i*arc;ctx.beginPath();ctx.moveTo(cx,cy);ctx.arc(cx,cy,r,a,a+arc);ctx.closePath();ctx.fillStyle=seg.color;ctx.fill();ctx.strokeStyle='rgba(255,255,255,.2)';ctx.lineWidth=2;ctx.stroke();ctx.save();ctx.translate(cx,cy);ctx.rotate(a+arc/2);ctx.textAlign='right';ctx.fillStyle='#fff';ctx.font='bold 10px Inter';seg.label.split('\n').forEach((l,li)=>{ctx.fillText(l,r-8,li*12-4);});ctx.restore();});
-  // Center circle
+  WSEGMENTS.forEach((seg,i)=>{
+    const a=angle+i*arc;const mid=a+arc/2;
+    ctx.beginPath();ctx.moveTo(cx,cy);ctx.arc(cx,cy,r,a,a+arc);ctx.closePath();ctx.fillStyle=seg.color;ctx.fill();
+    ctx.strokeStyle='rgba(255,255,255,.2)';ctx.lineWidth=2;ctx.stroke();
+    // Text - always readable, never upside-down
+    ctx.save();
+    const tx=cx+Math.cos(mid)*(r*0.65),ty=cy+Math.sin(mid)*(r*0.65);
+    ctx.translate(tx,ty);
+    // If segment is on left half, flip text so it reads correctly
+    const flipNeeded=Math.cos(mid)<0;
+    ctx.rotate(mid+(flipNeeded?Math.PI:0));
+    ctx.textAlign='center';ctx.fillStyle='#fff';ctx.font='bold 9px Inter';
+    const lines=seg.label.split('\n');
+    lines.forEach((l,li)=>{ctx.fillText(l,0,(li-(lines.length-1)/2)*13);});
+    ctx.restore();
+  });
   ctx.beginPath();ctx.arc(cx,cy,18,0,2*Math.PI);ctx.fillStyle='#0f1123';ctx.fill();ctx.strokeStyle=WSEGMENTS[0].color;ctx.lineWidth=3;ctx.stroke();
 }
 
